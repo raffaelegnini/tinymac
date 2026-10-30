@@ -33,9 +33,12 @@ for (px, name) in [(16, "16x16"), (32, "16x16@2x"), (32, "32x32"), (64, "32x32@2
     let dot = NSBezierPath(ovalIn: tile.insetBy(dx: s * 0.26, dy: s * 0.26))
     NSGradient(starting: dotColors.0, ending: dotColors.1)!.draw(in: dot, angle: -90)
     if plus {
-        // "+" badge in the top-right corner of the tile
-        let d = s * 0.30
-        let badge = NSRect(x: tile.maxX - d * 0.82, y: tile.maxY - d * 0.82, width: d, height: d)
+        // "+" badge in the top-right corner, kept inside the tile: macOS 26 puts icons
+        // whose outline is not the standard rounded square into a grey container.
+        let d = s * 0.20
+        let badge = NSRect(x: tile.maxX - s * 0.17 - d / 2, y: tile.maxY - s * 0.17 - d / 2, width: d, height: d)
+        tileColors.1.setFill()
+        NSBezierPath(ovalIn: badge.insetBy(dx: -s * 0.015, dy: -s * 0.015)).fill()
         NSColor.white.setFill()
         NSBezierPath(ovalIn: badge).fill()
         let arm = d * 0.56, bar = d * 0.16
