@@ -7,7 +7,7 @@ import AppKit
 /// minus `hide_captions` (12 px) when captions are hidden. A custom toolbar
 /// image is a strip of 7 equal sprites, the 7th replacing "Rec" while recording,
 /// with the colour of pixel (0, 0) treated as transparent.
-final class ToolbarView: NSView {
+public final class ToolbarView: NSView {
     weak var controller: TinyMacController?
 
     static let defaultButtonWidth = 52
@@ -25,9 +25,9 @@ final class ToolbarView: NSView {
     private var pressed: Int?
     private var tracking: NSTrackingArea?
 
-    override var isFlipped: Bool { true }
-    override var acceptsFirstResponder: Bool { true }
-    override func acceptsFirstMouse(for event: NSEvent?) -> Bool { true }
+    public override var isFlipped: Bool { true }
+    public override var acceptsFirstResponder: Bool { true }
+    public override func acceptsFirstMouse(for event: NSEvent?) -> Bool { true }
 
     var contentSize: NSSize {
         NSSize(width: padding + 6 * (buttonWidth + padding),
@@ -45,7 +45,7 @@ final class ToolbarView: NSView {
         return min(max(i, 0), 5)
     }
 
-    override func updateTrackingAreas() {
+    public override func updateTrackingAreas() {
         super.updateTrackingAreas()
         if let tracking { removeTrackingArea(tracking) }
         let t = NSTrackingArea(rect: bounds, options: [.mouseMoved, .mouseEnteredAndExited, .activeAlways, .inVisibleRect], owner: self)
@@ -53,22 +53,22 @@ final class ToolbarView: NSView {
         tracking = t
     }
 
-    override func resetCursorRects() {
+    public override func resetCursorRects() {
         addCursorRect(bounds, cursor: .pointingHand)
     }
 
-    override func mouseMoved(with event: NSEvent) {
+    public override func mouseMoved(with event: NSEvent) {
         let p = convert(event.locationInWindow, from: nil)
         let i = (0..<6).first { buttonRect($0).insetBy(dx: -CGFloat(padding) / 2, dy: -CGFloat(padding)).contains(p) }
         if i != hovered { hovered = i; needsDisplay = true }
     }
 
-    override func mouseExited(with event: NSEvent) {
+    public override func mouseExited(with event: NSEvent) {
         hovered = nil
         needsDisplay = true
     }
 
-    override func mouseDown(with event: NSEvent) {
+    public override func mouseDown(with event: NSEvent) {
         let p = convert(event.locationInWindow, from: nil)
         let i = buttonIndex(atX: p.x)
         pressed = i
@@ -76,12 +76,12 @@ final class ToolbarView: NSView {
         controller?.postCommand(0x8000 + i)
     }
 
-    override func mouseUp(with event: NSEvent) {
+    public override func mouseUp(with event: NSEvent) {
         pressed = nil
         needsDisplay = true
     }
 
-    override func keyDown(with event: NSEvent) {
+    public override func keyDown(with event: NSEvent) {
         switch event.keyCode {
         case 0x1F: controller?.postCommand(0x8000)        // 'O'
         case 0x24, 0x4C: controller?.postCommand(0x8005)  // Return
@@ -110,7 +110,7 @@ final class ToolbarView: NSView {
         }
     }
 
-    override func draw(_ dirtyRect: NSRect) {
+    public override func draw(_ dirtyRect: NSRect) {
         for i in 0..<6 {
             let r = buttonRect(i)
             let active = (i == 2 && isRecording) || (i == 3 && isPlaying)

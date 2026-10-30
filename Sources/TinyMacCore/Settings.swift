@@ -5,12 +5,12 @@ import Foundation
 /// The original keeps its settings in "<exe name>.ini" next to the executable,
 /// section [TinyTask]. An .app bundle must not be written to, so the port keeps
 /// the identical file in ~/Library/Application Support/TinyMac/TinyMac.ini.
-final class IniFile {
-    let url: URL
+public final class IniFile {
+    public let url: URL
 
-    init(url: URL) { self.url = url }
+    public init(url: URL) { self.url = url }
 
-    static var standard: IniFile {
+    public static var standard: IniFile {
         let dir = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
             .appendingPathComponent("TinyMac", isDirectory: true)
         return IniFile(url: dir.appendingPathComponent("TinyMac.ini"))
@@ -23,7 +23,7 @@ final class IniFile {
             .map(String.init)
     }
 
-    func string(_ section: String, _ key: String, default def: String) -> String {
+    public func string(_ section: String, _ key: String, default def: String) -> String {
         var inSection = false
         for raw in readLines() {
             let line = raw.trimmingCharacters(in: .whitespaces)
@@ -39,13 +39,13 @@ final class IniFile {
         return def
     }
 
-    func int(_ section: String, _ key: String, default def: Int) -> Int {
+    public func int(_ section: String, _ key: String, default def: Int) -> Int {
         let s = string(section, key, default: "\u{0}")
         if s == "\u{0}" { return def }
         return atoiLike(s)
     }
 
-    func write(_ section: String, _ key: String, _ value: String?) {
+    public func write(_ section: String, _ key: String, _ value: String?) {
         var lines = readLines()
         while lines.last == "" { lines.removeLast() }
         var sectionStart: Int?
@@ -79,11 +79,11 @@ final class IniFile {
         try? (lines.joined(separator: "\r\n") + "\r\n").write(to: url, atomically: true, encoding: .utf8)
     }
 
-    func write(_ section: String, _ key: String, _ value: Int) { write(section, key, String(value)) }
+    public func write(_ section: String, _ key: String, _ value: Int) { write(section, key, String(value)) }
 }
 
 /// C atoi(): optional whitespace, optional sign, leading digits, 0 if none.
-func atoiLike(_ s: String) -> Int {
+public func atoiLike(_ s: String) -> Int {
     var it = s.drop(while: { $0 == " " || $0 == "\t" })
     var sign = 1
     if let f = it.first, f == "-" || f == "+" { sign = f == "-" ? -1 : 1; it = it.dropFirst() }

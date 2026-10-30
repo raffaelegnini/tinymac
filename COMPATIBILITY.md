@@ -93,3 +93,28 @@ TinyMac also reproduces these TinyTask behaviours, so both programs act the same
 | Overwriting a file | The save dialog asks for confirmation |
 
 TinyMac needs Accessibility permission to replay input and Input Monitoring permission to record it.
+
+## TinyMac Plus
+
+TinyMac Plus uses the same engine. With every extra switched off in **Prefs › Plus Options**, it behaves exactly like
+TinyMac. The extras use these additions:
+
+| Addition | Format |
+|---|---|
+| Scroll records | `message` = `0x20A` (`WM_MOUSEWHEEL`). `paramL` = cursor x. `paramH` = vertical delta in the high 16 bits and horizontal delta in the low 16 bits, as signed pixel values. |
+| Per-recording settings | `<name>.rec.tinymac` next to the recording: JSON with `speed`, `loops`, `continuous` and the size of the main display when the recording was made (`screenWidth`, `screenHeight`, in points). |
+| Settings | Extra keys in a `[TinyMacPlus]` section of the same `TinyMac.ini`. The `[TinyTask]` section is unchanged. |
+
+TinyTask writes no scroll records and does not replay them. A recording without scroll records is a plain TinyTask
+recording. Switch off **Record Scroll Wheel** to keep new recordings that way.
+
+The **Edit Recording** window changes the records in place and keeps the format: delays become new timestamps,
+deleted events disappear, and the result saves as a normal `.rec`.
+
+When a `.tinymac` file stores the display size and the current main display has a different size, Plus scales every
+replayed mouse position by the ratio of the two sizes.
+
+## Website link
+
+TinyTask's author ended the project in 2020, and the tinytask.net domain has since passed to a third party. The
+**TinyTask Website** item and the About link open the archived original site on the Wayback Machine instead.

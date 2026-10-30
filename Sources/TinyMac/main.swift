@@ -1,4 +1,5 @@
 import AppKit
+import TinyMacCore
 
 let app = NSApplication.shared
 let controller = TinyMacController()

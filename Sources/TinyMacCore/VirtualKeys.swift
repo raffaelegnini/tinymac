@@ -12,39 +12,39 @@ import ApplicationServices
 /// Keys that do not exist on a Mac keyboard follow Apple's extended-keyboard
 /// convention: Print Screen = F13, Scroll Lock = F14, Pause = F15,
 /// Insert = Help, Num Lock = keypad Clear.
-enum VK {
-    static let lButton: Int = 0x01
-    static let rButton: Int = 0x02
-    static let mButton: Int = 0x04
-    static let xButton1: Int = 0x05
-    static let xButton2: Int = 0x06
-    static let shift: Int = 0x10
-    static let control: Int = 0x11
-    static let menu: Int = 0x12      // Alt / Option
-    static let pause: Int = 0x13
-    static let capital: Int = 0x14
-    static let snapshot: Int = 0x2C  // Print Screen
-    static let lWin: Int = 0x5B
-    static let rWin: Int = 0x5C
-    static let apps: Int = 0x5D
-    static let f8: Int = 0x77
-    static let f12: Int = 0x7B
-    static let numLock: Int = 0x90
-    static let scroll: Int = 0x91
-    static let lShift: Int = 0xA0
-    static let rShift: Int = 0xA1
-    static let lControl: Int = 0xA2
-    static let rControl: Int = 0xA3
-    static let lMenu: Int = 0xA4
-    static let rMenu: Int = 0xA5
-    static let keyR: Int = 0x52
-    static let keyP: Int = 0x50
-    static let keyO: Int = 0x4F
-    static let `return`: Int = 0x0D
+public enum VK {
+    public static let lButton: Int = 0x01
+    public static let rButton: Int = 0x02
+    public static let mButton: Int = 0x04
+    public static let xButton1: Int = 0x05
+    public static let xButton2: Int = 0x06
+    public static let shift: Int = 0x10
+    public static let control: Int = 0x11
+    public static let menu: Int = 0x12      // Alt / Option
+    public static let pause: Int = 0x13
+    public static let capital: Int = 0x14
+    public static let snapshot: Int = 0x2C  // Print Screen
+    public static let lWin: Int = 0x5B
+    public static let rWin: Int = 0x5C
+    public static let apps: Int = 0x5D
+    public static let f8: Int = 0x77
+    public static let f12: Int = 0x7B
+    public static let numLock: Int = 0x90
+    public static let scroll: Int = 0x91
+    public static let lShift: Int = 0xA0
+    public static let rShift: Int = 0xA1
+    public static let lControl: Int = 0xA2
+    public static let rControl: Int = 0xA3
+    public static let lMenu: Int = 0xA4
+    public static let rMenu: Int = 0xA5
+    public static let keyR: Int = 0x52
+    public static let keyP: Int = 0x50
+    public static let keyO: Int = 0x4F
+    public static let `return`: Int = 0x0D
 
     /// VK -> macOS keycodes whose state makes up that VK.
     /// The first keycode is the one used when injecting the key.
-    static let toMac: [Int: [CGKeyCode]] = {
+    public static let toMac: [Int: [CGKeyCode]] = {
         var m: [Int: [CGKeyCode]] = [
             0x08: [0x33], 0x09: [0x30], 0x0D: [0x24, 0x4C], 0x10: [0x38, 0x3C],
             0x11: [0x3B, 0x3E], 0x12: [0x3A, 0x3D], 0x13: [0x71], 0x14: [0x39],
@@ -77,7 +77,7 @@ enum VK {
 
     /// Windows MapVirtualKey(vk, MAPVK_VK_TO_VSC) for a US keyboard. Only used
     /// so that saved .rec files carry the same scan codes as the original.
-    static let scanCode: [Int: UInt32] = {
+    public static let scanCode: [Int: UInt32] = {
         var m: [Int: UInt32] = [
             0x08: 0x0E, 0x09: 0x0F, 0x0D: 0x1C, 0x10: 0x2A, 0x11: 0x1D, 0x12: 0x38,
             0x14: 0x3A, 0x1B: 0x01, 0x20: 0x39, 0x21: 0x49, 0x22: 0x51, 0x23: 0x4F,
@@ -102,10 +102,10 @@ enum VK {
         return m
     }()
 
-    static func mapVirtualKey(_ vk: Int) -> UInt32 { scanCode[vk] ?? 0 }
+    public static func mapVirtualKey(_ vk: Int) -> UInt32 { scanCode[vk] ?? 0 }
 
     /// Equivalent of GetAsyncKeyState(vk) & 0x8000 / GetKeyState(vk) & 0x8000.
-    static func isDown(_ vk: Int) -> Bool {
+    public static func isDown(_ vk: Int) -> Bool {
         let src = CGEventSourceStateID.combinedSessionState
         switch vk {
         case lButton: return CGEventSource.buttonState(src, button: .left)
@@ -121,13 +121,14 @@ enum VK {
     }
 
     /// Windows "extended key" set used by TinyTask for KEYEVENTF_EXTENDEDKEY.
-    static func isExtended(_ vk: Int) -> Bool {
+    public static func isExtended(_ vk: Int) -> Bool {
         (0x21...0x2E).contains(vk) || vk == control || vk == lWin || vk == rWin || vk == apps
     }
 }
 
 /// Synthesised input, standing in for keybd_event / mouse_event / SetCursorPos.
-final class InputInjector {
+public final class InputInjector {
+    public init() {}
     private let source = CGEventSource(stateID: .hidSystemState)
     private var downVKs = Set<Int>()
     private var leftHeld = false
@@ -137,7 +138,7 @@ final class InputInjector {
     private var lastDownButton: CGMouseButton = .left
     private var clickState: Int64 = 1
 
-    static var cursorLocation: CGPoint {
+    public static var cursorLocation: CGPoint {
         CGEvent(source: nil)?.location ?? .zero
     }
 
@@ -151,7 +152,7 @@ final class InputInjector {
     }
 
     /// keybd_event(vk, MapVirtualKey(vk), up ? KEYEVENTF_KEYUP : 0, 0)
-    func key(_ vk: Int, up: Bool) {
+    public func key(_ vk: Int, up: Bool) {
         if up { downVKs.remove(vk) } else { downVKs.insert(vk) }
         guard let code = VK.toMac[vk]?.first,
               let ev = CGEvent(keyboardEventSource: source, virtualKey: code, keyDown: !up) else { return }
@@ -160,7 +161,7 @@ final class InputInjector {
     }
 
     /// mouse_event(MOUSEEVENTF_MOVE | MOUSEEVENTF_ABSOLUTE, ...) followed by SetCursorPos(x, y)
-    func move(to p: CGPoint) {
+    public func move(to p: CGPoint) {
         let type: CGEventType = leftHeld ? .leftMouseDragged : (rightHeld ? .rightMouseDragged : .mouseMoved)
         let button: CGMouseButton = rightHeld && !leftHeld ? .right : .left
         guard let ev = CGEvent(mouseEventSource: source, mouseType: type, mouseCursorPosition: p, mouseButton: button) else { return }
@@ -169,7 +170,7 @@ final class InputInjector {
     }
 
     /// mouse_event(MOUSEEVENTF_{LEFT,RIGHT}{DOWN,UP}) at the current cursor position.
-    func button(_ button: CGMouseButton, down: Bool) {
+    public func button(_ button: CGMouseButton, down: Bool) {
         let p = InputInjector.cursorLocation
         if down {
             // Windows derives double-clicks from timing; macOS apps read the click count.

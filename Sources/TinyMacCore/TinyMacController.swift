@@ -4,61 +4,75 @@ import UniformTypeIdentifiers
 
 /// One recorded input event. Identical to the Win32 EVENTMSG structure that
 /// TinyTask 1.77 writes to .rec files: 5 little-endian DWORDs, 20 bytes.
-struct EventMsg {
-    var message: UInt32 = 0  // WM_KEYDOWN 0x100, WM_KEYUP 0x101, WM_MOUSEMOVE 0x200, WM_[LR]BUTTON{DOWN,UP}
-    var paramL: UInt32 = 0   // key: (scan << 8) | vk     mouse: x
-    var paramH: UInt32 = 0   // key: scan                 mouse: y
-    var time: UInt32 = 0     // GetTickCount() milliseconds
-    var hwnd: UInt32 = 0     // foreground window at record time
+public struct EventMsg {
+    public var message: UInt32 = 0  // WM_KEYDOWN 0x100, WM_KEYUP 0x101, WM_MOUSEMOVE 0x200, WM_[LR]BUTTON{DOWN,UP}
+    public var paramL: UInt32 = 0   // key: (scan << 8) | vk     mouse: x
+    public var paramH: UInt32 = 0   // key: scan                 mouse: y
+    public var time: UInt32 = 0     // GetTickCount() milliseconds
+    public var hwnd: UInt32 = 0     // foreground window at record time
 
-    static let size = 20
+    public static let size = 20
+
+    public init(message: UInt32 = 0, paramL: UInt32 = 0, paramH: UInt32 = 0, time: UInt32 = 0, hwnd: UInt32 = 0) {
+        self.message = message
+        self.paramL = paramL
+        self.paramH = paramH
+        self.time = time
+        self.hwnd = hwnd
+    }
 }
 
 /// TinyMac engine and main window: recording, playback, compile and preferences.
 ///
 /// Behaviour, timings and settings reproduce TinyTask 1.77 so that recordings
 /// and settings stay interchangeable with it (see COMPATIBILITY.md).
-final class TinyMacController: NSObject, NSApplicationDelegate, NSWindowDelegate {
+open class TinyMacController: NSObject, NSApplicationDelegate, NSWindowDelegate {
     // Commands (WM_COMMAND ids)
-    static let cmdOpen = 0x8000, cmdSave = 0x8001, cmdRecord = 0x8002, cmdPlay = 0x8003
-    static let cmdCompile = 0x8004, cmdPrefs = 0x8005
+    public static let cmdOpen = 0x8000, cmdSave = 0x8001, cmdRecord = 0x8002, cmdPlay = 0x8003
+    public static let cmdCompile = 0x8004, cmdPrefs = 0x8005
     // Timers
-    static let timerRecord = 0x3E9, timerPlay = 0x3EA, timerHotkeys = 0x3ED
+    public static let timerRecord = 0x3E9, timerPlay = 0x3EA, timerHotkeys = 0x3ED
 
-    static let section = "TinyTask"  // ini section kept as in the original
-    static let version = "1.77"      // TinyTask release this port reproduces
-    static let appVersion = "1.0"
+    public static let section = "TinyTask"  // ini section kept as in the original
+    public static let version = "1.77"      // TinyTask release this port reproduces
+    public static let appVersion = "1.1"
 
-    let ini = IniFile.standard
-    let injector = InputInjector()
+    /// Name shown in titles and dialogs; TinyMac Plus overrides it.
+    open var appName: String { "TinyMac" }
+    open var appVersion: String { Self.appVersion }
 
-    var window: NSWindow!
-    var toolbar: ToolbarView!
+    public override init() { super.init() }
 
-    var buffer: [EventMsg]?            // recording buffer (zero records past the end)
-    var index = 0                      // record count AND playback position (shared, as in TinyTask)
-    var state = 0                      // 0, 0x8002 recording, 0x8003 playing
-    var speed = 0                      // 0 = 1x, 1 = 1/2x, 2 = 2x, 100 = 100x, other = custom
-    var speedCustom = 8
-    var loops = 1
-    var loopCounter = 0
-    var continuous = false
-    var recordKey: UInt8 = 0           // 0 = Ctrl+Shift+Alt+R, 1 = Print Screen, 8 = F8, 12 = F12
-    var playKey: UInt8 = 0             // 0 = Ctrl+Shift+Alt+P, ...
-    var topmost = false
-    var hideCaptions = 0               // 0 or 12
-    var toolbarPadding = 5
-    var customToolbar = false
-    var startTick: UInt32 = 0
-    var recordDuration: UInt32 = 0
-    var keyTable = [UInt8](repeating: 0, count: 256)  // last key state per VK; slot 0 = (x + y) & 0xff of the last move
-    var dragging = false
-    var clicked = false                // never reset once set, as in TinyTask
-    var compiled = false
-    var displayName = ""
-    var lastPath = ""
-    var compiledSpeed = 0              // speed embedded by Compile
-    var compiledLoops = 1              // loop count embedded by Compile
+    public let ini = IniFile.standard
+    public let injector = InputInjector()
+
+    public var window: NSWindow!
+    public var toolbar: ToolbarView!
+
+    public var buffer: [EventMsg]?            // recording buffer (zero records past the end)
+    public var index = 0                      // record count AND playback position (shared, as in TinyTask)
+    public var state = 0                      // 0, 0x8002 recording, 0x8003 playing
+    public var speed = 0                      // 0 = 1x, 1 = 1/2x, 2 = 2x, 100 = 100x, other = custom
+    public var speedCustom = 8
+    public var loops = 1
+    public var loopCounter = 0
+    public var continuous = false
+    public var recordKey: UInt8 = 0           // 0 = Ctrl+Shift+Alt+R, 1 = Print Screen, 8 = F8, 12 = F12
+    public var playKey: UInt8 = 0             // 0 = Ctrl+Shift+Alt+P, ...
+    public var topmost = false
+    public var hideCaptions = 0               // 0 or 12
+    public var toolbarPadding = 5
+    public var customToolbar = false
+    public var startTick: UInt32 = 0
+    public var recordDuration: UInt32 = 0
+    public var keyTable = [UInt8](repeating: 0, count: 256)  // last key state per VK; slot 0 = (x + y) & 0xff of the last move
+    public var dragging = false
+    public var clicked = false                // never reset once set, as in TinyTask
+    public var compiled = false
+    public var displayName = ""
+    public var lastPath = ""
+    public var compiledSpeed = 0              // speed embedded by Compile
+    public var compiledLoops = 1              // loop count embedded by Compile
 
     private var timers: [Int: Timer] = [:]
     private var hotkeyLatch = (record: false, play: false)
@@ -67,11 +81,11 @@ final class TinyMacController: NSObject, NSApplicationDelegate, NSWindowDelegate
 
     // MARK: - Startup
 
-    func applicationWillFinishLaunching(_ notification: Notification) {
+    open func applicationWillFinishLaunching(_ notification: Notification) {
         buildMainMenu()
     }
 
-    func applicationDidFinishLaunching(_ notification: Notification) {
+    open func applicationDidFinishLaunching(_ notification: Notification) {
         let payload = Bundle.main.url(forResource: "payload", withExtension: "rec")
         compiled = payload != nil
         if compiled {
@@ -115,7 +129,7 @@ final class TinyMacController: NSObject, NSApplicationDelegate, NSWindowDelegate
 
         window = NSWindow(contentRect: NSRect(origin: .zero, size: toolbar.contentSize),
                           styleMask: [.titled, .closable, .miniaturizable], backing: .buffered, defer: false)
-        window.title = "TinyMac"
+        window.title = appName
         window.contentView = toolbar
         window.delegate = self
         window.isReleasedWhenClosed = false
@@ -149,20 +163,20 @@ final class TinyMacController: NSObject, NSApplicationDelegate, NSWindowDelegate
     }
 
     /// Equivalent of passing a .rec on the command line ("Open with TinyMac").
-    func application(_ sender: NSApplication, openFile filename: String) -> Bool {
+    open func application(_ sender: NSApplication, openFile filename: String) -> Bool {
         if !launched { pendingOpen = filename; return true }
         guard state == 0 else { return false }
         return load(filename)
     }
 
-    func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool { true }
+    open func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool { true }
 
-    func applicationShouldHandleReopen(_ sender: NSApplication, hasVisibleWindows flag: Bool) -> Bool {
+    open func applicationShouldHandleReopen(_ sender: NSApplication, hasVisibleWindows flag: Bool) -> Bool {
         if !compiled { window.makeKeyAndOrderFront(nil) }
         return true
     }
 
-    func applicationWillTerminate(_ notification: Notification) {
+    open func applicationWillTerminate(_ notification: Notification) {
         destroy()
     }
 
@@ -188,7 +202,7 @@ final class TinyMacController: NSObject, NSApplicationDelegate, NSWindowDelegate
         for id in Array(timers.keys) { killTimer(id) }
     }
 
-    func windowWillClose(_ notification: Notification) {
+    open func windowWillClose(_ notification: Notification) {
         destroy()
         NSApp.terminate(nil)
     }
@@ -203,12 +217,12 @@ final class TinyMacController: NSObject, NSApplicationDelegate, NSWindowDelegate
 
     // MARK: - Timers (SetTimer / KillTimer)
 
-    static func tickCount() -> UInt32 {
+    public static func tickCount() -> UInt32 {
         UInt32(truncatingIfNeeded: Int64(ProcessInfo.processInfo.systemUptime * 1000))
     }
 
     /// SetTimer: repeating until killed; USER_TIMER_MINIMUM / MAXIMUM clamping.
-    func setTimer(_ id: Int, _ elapse: UInt32) {
+    public func setTimer(_ id: Int, _ elapse: UInt32) {
         killTimer(id)
         let ms = min(max(elapse, 10), 0x7FFF_FFFF)
         let t = Timer(timeInterval: Double(ms) / 1000, repeats: true) { [weak self] _ in self?.onTimer(id) }
@@ -217,7 +231,7 @@ final class TinyMacController: NSObject, NSApplicationDelegate, NSWindowDelegate
         timers[id] = t
     }
 
-    func killTimer(_ id: Int) {
+    public func killTimer(_ id: Int) {
         timers.removeValue(forKey: id)?.invalidate()
     }
 
@@ -238,13 +252,13 @@ final class TinyMacController: NSObject, NSApplicationDelegate, NSWindowDelegate
     }
 
     /// PostMessage(hwnd, WM_COMMAND, MAKEWPARAM(id, hi), 0)
-    func postCommand(_ id: Int, hi: Int = 0) {
+    public func postCommand(_ id: Int, hi: Int = 0) {
         DispatchQueue.main.async { [weak self] in self?.command(id, hi: hi) }
     }
 
     // MARK: - Buffer helpers
 
-    private func rec(_ i: Int) -> EventMsg {
+    public func rec(_ i: Int) -> EventMsg {
         guard let b = buffer, i >= 0, i < b.count else { return EventMsg() }
         return b[i]
     }
@@ -253,7 +267,7 @@ final class TinyMacController: NSObject, NSApplicationDelegate, NSWindowDelegate
 
     // MARK: - WM_COMMAND
 
-    func command(_ id: Int, hi: Int) {
+    open func command(_ id: Int, hi: Int) {
         switch id {
         case Self.cmdOpen: cmdOpenFile()
         case Self.cmdSave, Self.cmdCompile: cmdSaveOrCompile(compile: id == Self.cmdCompile)
@@ -296,6 +310,54 @@ final class TinyMacController: NSObject, NSApplicationDelegate, NSWindowDelegate
         }
     }
 
+    // MARK: - Extension points (no-ops here; TinyMac Plus overrides them)
+
+    /// Replays a record type TinyTask does not produce.
+    open func playExtra(_ r: EventMsg) {}
+    /// Maps a recorded cursor position to the point to replay it at.
+    open func playbackPoint(_ p: CGPoint) -> CGPoint { p }
+    /// Extra stop condition checked before every replayed event.
+    open func playbackShouldStop() -> Bool { false }
+    /// Adds items to the Prefs menu, before the website and About entries.
+    open func addExtraPrefsItems(to menu: NSMenu) {}
+    /// Adds menus to the menu bar.
+    open func extendMainMenu(_ main: NSMenu) {}
+    /// Called whenever recording or playback starts or stops.
+    open func stateDidChange() {}
+    /// Called after a recording was loaded from or saved to `path`.
+    open func didLoad(path: String) {}
+    open func didSave(path: String) {}
+    /// Called while compiling, with the Resources folder of the new app.
+    open func compileExtras(resources: URL) -> Bool { true }
+
+    /// Appends one record while recording, growing the buffer as the record timer does.
+    public func appendRecord(_ r: EventMsg) {
+        guard state == Self.cmdRecord else { return }
+        if buffer == nil || index + 100 >= buffer!.count {
+            if buffer == nil { buffer = [] }
+            buffer!.append(contentsOf: [EventMsg](repeating: EventMsg(), count: 20000 / EventMsg.size))
+        }
+        buffer![index] = r
+        index += 1
+    }
+
+    /// Replaces the whole recording, keeping the zero records past its end.
+    public func replaceRecording(_ records: [EventMsg]) {
+        buffer = records + [EventMsg](repeating: EventMsg(), count: 0x1000 / EventMsg.size)
+        index = records.count
+    }
+
+    /// The records of the current recording, up to the first zero record.
+    public var records: [EventMsg] {
+        guard let b = buffer else { return [] }
+        var out: [EventMsg] = []
+        for r in b.prefix(index) {
+            if r.message == 0 { break }
+            out.append(r)
+        }
+        return out
+    }
+
     // MARK: Open (0x8000)
 
     private func cmdOpenFile() {
@@ -313,7 +375,7 @@ final class TinyMacController: NSObject, NSApplicationDelegate, NSWindowDelegate
     @discardableResult
     func load(_ path: String) -> Bool {
         guard let data = FileManager.default.contents(atPath: path), data.count >= 1 else {
-            messageBox("Unable to read file \"\(path)\"", title: "TinyMac", style: .critical)
+            messageBox("Unable to read file \"\(path)\"", title: appName, style: .critical)
             return false
         }
         buffer = nil
@@ -345,6 +407,7 @@ final class TinyMacController: NSObject, NSApplicationDelegate, NSWindowDelegate
         index = read / EventMsg.size
         displayName = (path as NSString).lastPathComponent
         window.title = displayName
+        didLoad(path: path)
         return true
     }
 
@@ -378,7 +441,7 @@ final class TinyMacController: NSObject, NSApplicationDelegate, NSWindowDelegate
         try? FileManager.default.removeItem(atPath: lastPath)
 
         if !compile {
-            _ = writeRecording(to: URL(fileURLWithPath: lastPath))
+            if writeRecording(to: URL(fileURLWithPath: lastPath)) { didSave(path: lastPath) }
             displayName = (lastPath as NSString).lastPathComponent
             window.title = displayName
             return
@@ -386,7 +449,7 @@ final class TinyMacController: NSObject, NSApplicationDelegate, NSWindowDelegate
         compileApp(to: lastPath)
     }
 
-    private func recordingData() -> Data {
+    public func recordingData() -> Data {
         var d = Data(capacity: index * EventMsg.size)
         for i in 0..<index {
             let r = rec(i)
@@ -417,6 +480,7 @@ final class TinyMacController: NSObject, NSApplicationDelegate, NSWindowDelegate
         var ok = (try? FileManager.default.createDirectory(at: res, withIntermediateDirectories: true)) != nil
         ok = ok && (try? cfg.write(to: res.appendingPathComponent("payload.cfg"), atomically: true, encoding: .utf8)) != nil
         ok = ok && writeRecording(to: res.appendingPathComponent("payload.rec"))
+        ok = ok && compileExtras(resources: res)
 
         let plistURL = dest.appendingPathComponent("Contents/Info.plist")
         if ok, let plist = NSMutableDictionary(contentsOf: plistURL) {
@@ -440,14 +504,14 @@ final class TinyMacController: NSObject, NSApplicationDelegate, NSWindowDelegate
         }
 
         guard ok else {
-            messageBox("  Compile Error\n\n\(path)", title: "TinyMac", style: .critical)
+            messageBox("  Compile Error\n\n\(path)", title: appName, style: .critical)
             return
         }
         let total = directorySize(dest)
         let (sizeValue, unit) = total > 0x100000 ? (total / 0x100000, "MB") : (total / 0x400, "KB")
         let (speedValue, speedSuffix): (Int, String) = speed == 1 ? (1, "/2") : (speed == 0 ? (1, "") : (speed, ""))
         let text = "  Compile successful\t\n\n  \"\(path)\"   (\(sizeValue) \(unit))\n\nProgram attributes:\n----------------------------------\n  Execution Speed:\t \(speedValue)\(speedSuffix)x\n  Repeat Loops:\t \(loops)"
-        messageBox(text, title: "TinyMac", style: .informational, icon: NSApp.applicationIconImage)
+        messageBox(text, title: appName, style: .informational, icon: NSApp.applicationIconImage)
     }
 
     private func directorySize(_ url: URL) -> Int {
@@ -461,7 +525,7 @@ final class TinyMacController: NSObject, NSApplicationDelegate, NSWindowDelegate
     }
 
     private func nothingRecorded() {
-        messageBox("Nothing Recorded\n\nPress the blue button to start a new recording", title: "TinyMac", style: .informational)
+        messageBox("Nothing Recorded\n\nPress the blue button to start a new recording", title: appName, style: .informational)
     }
 
     // MARK: Release keys (start of recording and of every playback loop)
@@ -495,7 +559,7 @@ final class TinyMacController: NSObject, NSApplicationDelegate, NSWindowDelegate
             killTimer(Self.timerRecord)
             recordDuration = Self.tickCount() &- startTick
             state = 0
-            window.title = displayName.isEmpty ? "TinyMac" : displayName
+            window.title = displayName.isEmpty ? appName : displayName
             if buffer != nil {
                 var end = index
                 var i = end != 0 ? end - 1 : 0
@@ -590,13 +654,13 @@ final class TinyMacController: NSObject, NSApplicationDelegate, NSWindowDelegate
         if compiled { postClose() }
         loopCounter = 0
         state = 0
-        window.title = displayName.isEmpty ? "TinyMac" : displayName
+        window.title = displayName.isEmpty ? appName : displayName
         updateToolbarState()
     }
 
     /// WM_TIMER 0x3EA: replay one event, then wait for the recorded gap.
     private func playTick() {
-        if VK.isDown(VK.pause) || VK.isDown(VK.scroll) { state = 0 }
+        if VK.isDown(VK.pause) || VK.isDown(VK.scroll) || playbackShouldStop() { state = 0 }
         if state == 0 {
             if compiled { postClose() }
             updateToolbarState()
@@ -608,7 +672,7 @@ final class TinyMacController: NSObject, NSApplicationDelegate, NSWindowDelegate
             let vk = Int(r.paramL & 0xFF)
             if vk != VK.lShift { injector.key(vk, up: r.message == 0x101) }
         case 0x200:
-            injector.move(to: CGPoint(x: Int(Int32(bitPattern: r.paramL)), y: Int(Int32(bitPattern: r.paramH))))
+            injector.move(to: playbackPoint(CGPoint(x: Int(Int32(bitPattern: r.paramL)), y: Int(Int32(bitPattern: r.paramH)))))
         case 0x201, 0x202:
             clicked = true
             injector.button(.left, down: r.message == 0x201)
@@ -617,7 +681,7 @@ final class TinyMacController: NSObject, NSApplicationDelegate, NSWindowDelegate
             injector.button(.right, down: r.message == 0x204)
             dragging = false
         default:
-            break
+            playExtra(r)
         }
         index += 1
 
@@ -646,7 +710,7 @@ final class TinyMacController: NSObject, NSApplicationDelegate, NSWindowDelegate
                 continue
             }
             let m = rec(index)
-            injector.move(to: CGPoint(x: Int(Int32(bitPattern: m.paramL)), y: Int(Int32(bitPattern: m.paramH))))
+            injector.move(to: playbackPoint(CGPoint(x: Int(Int32(bitPattern: m.paramL)), y: Int(Int32(bitPattern: m.paramH)))))
             usleep(1000)
             moved = true
             index += 1
@@ -660,7 +724,7 @@ final class TinyMacController: NSObject, NSApplicationDelegate, NSWindowDelegate
 
     // MARK: Hotkeys + title (timer 0x3ED, every 50 ms)
 
-    private func hotkeyDown(_ setting: UInt8, letter: Int) -> Bool {
+    open func hotkeyDown(_ setting: UInt8, letter: Int) -> Bool {
         switch setting {
         case 0: return VK.isDown(letter) && VK.isDown(VK.control) && VK.isDown(VK.shift) && VK.isDown(VK.menu)
         case 1: return VK.isDown(VK.snapshot)
@@ -695,13 +759,14 @@ final class TinyMacController: NSObject, NSApplicationDelegate, NSWindowDelegate
         } else if !displayName.isEmpty {
             title = displayName
         }
-        if title.isEmpty { title = "TinyMac" }
+        if title.isEmpty { title = appName }
         if window.title != title { window.title = title }
     }
 
     private func updateToolbarState() {
         toolbar.isRecording = state == Self.cmdRecord
         toolbar.isPlaying = state == Self.cmdPlay
+        stateDidChange()
     }
 
     // MARK: - Prefs menu (0x8005)
@@ -756,8 +821,9 @@ final class TinyMacController: NSObject, NSApplicationDelegate, NSWindowDelegate
         add("Use Custom Toolbar...", 0x801A, checked: customToolbar)
         add("Use Default Toolbar", 0x801B, checked: !customToolbar)
         menu.addItem(.separator())
+        addExtraPrefsItems(to: menu)
         add("TinyTask Website", 0x800D)
-        add("About TinyMac", 0x800E)
+        add("About \(appName)", 0x800E)
 
         // At the cursor when it is over the Prefs button, else at the window's bottom-right.
         let mouse = NSEvent.mouseLocation
@@ -774,7 +840,7 @@ final class TinyMacController: NSObject, NSApplicationDelegate, NSWindowDelegate
     }
 
     private func hotkeyConflict() {
-        messageBox("Hotkey Conflict", title: "TinyMac", style: .warning)
+        messageBox("Hotkey Conflict", title: appName, style: .warning)
     }
 
     private func askLoops() {
@@ -794,8 +860,9 @@ final class TinyMacController: NSObject, NSApplicationDelegate, NSWindowDelegate
     }
 
     private func openWebsite() {
-        if !NSWorkspace.shared.open(URL(string: "https://www.tinytask.net")!) {
-            messageBox("Unable to connect to \"www.tinytask.net\"", title: "TinyMac", style: .warning)
+        // tinytask.net changed hands after the project ended; open the archived original site.
+        if !NSWorkspace.shared.open(URL(string: "https://web.archive.org/web/2020/https://www.tinytask.net/")!) {
+            messageBox("Unable to connect to \"www.tinytask.net\"", title: appName, style: .warning)
         }
     }
 
@@ -803,8 +870,8 @@ final class TinyMacController: NSObject, NSApplicationDelegate, NSWindowDelegate
     /// message box (subclassed STATIC, id 0x800D) that opens the website when clicked.
     private func showAbout() {
         let alert = NSAlert()
-        alert.messageText = "TinyMac \(Self.appVersion)"
-        alert.informativeText = "macOS port of TinyTask \(Self.version) (Copyright © 2019, www.tinytask.net). Not affiliated with the TinyTask author.\n\n•••> If you like this software, please keep it alive by donating at the website above. Thank You!!   : )"
+        alert.messageText = "\(appName) \(appVersion)"
+        alert.informativeText = "macOS port of TinyTask \(Self.version) (Copyright © 2019, www.tinytask.net). Not affiliated with the TinyTask author.\n\nTinyTask was discontinued in 2020 and its domain now belongs to someone else, so the link below opens the archived original site."
         alert.icon = NSApp.applicationIconImage
         alert.addButton(withTitle: "OK")
         let link = NSButton(title: "", target: self, action: #selector(menuCommand(_:)))
@@ -817,7 +884,7 @@ final class TinyMacController: NSObject, NSApplicationDelegate, NSWindowDelegate
         link.sizeToFit()
         link.addCursorRect(link.bounds, cursor: .pointingHand)
         alert.accessoryView = link
-        alert.window.title = "About TinyMac"
+        alert.window.title = "About \(appName)"
         alert.window.level = topmost ? .floating : .modalPanel
         NSApp.activate(ignoringOtherApps: true)
         alert.runModal()
@@ -884,7 +951,7 @@ final class TinyMacController: NSObject, NSApplicationDelegate, NSWindowDelegate
     // MARK: - Dialogs
 
     @discardableResult
-    func messageBox(_ text: String, title: String, style: NSAlert.Style, buttons: [String] = ["OK"], icon: NSImage? = nil) -> Int {
+    public func messageBox(_ text: String, title: String, style: NSAlert.Style, buttons: [String] = ["OK"], icon: NSImage? = nil) -> Int {
         let alert = NSAlert()
         let parts = text.trimmingCharacters(in: .whitespaces).components(separatedBy: "\n\n")
         alert.messageText = parts[0].trimmingCharacters(in: .whitespacesAndNewlines)
@@ -900,7 +967,7 @@ final class TinyMacController: NSObject, NSApplicationDelegate, NSWindowDelegate
 
     private let digitsOnly = DigitsOnlyFieldDelegate()
 
-    private func inputBox(title: String, prompt: String, value: String) -> String? {
+    public func inputBox(title: String, prompt: String, value: String) -> String? {
         let alert = NSAlert()
         alert.messageText = title
         alert.informativeText = prompt
@@ -926,15 +993,16 @@ final class TinyMacController: NSObject, NSApplicationDelegate, NSWindowDelegate
         let appItem = NSMenuItem()
         main.addItem(appItem)
         let app = NSMenu()
-        let about = NSMenuItem(title: "About TinyMac", action: #selector(menuCommand(_:)), keyEquivalent: "")
+        let about = NSMenuItem(title: "About \(appName)", action: #selector(menuCommand(_:)), keyEquivalent: "")
         about.target = self
         about.tag = 0x800E
         app.addItem(about)
         app.addItem(.separator())
-        app.addItem(NSMenuItem(title: "Hide TinyMac", action: #selector(NSApplication.hide(_:)), keyEquivalent: "h"))
+        app.addItem(NSMenuItem(title: "Hide \(appName)", action: #selector(NSApplication.hide(_:)), keyEquivalent: "h"))
         app.addItem(.separator())
-        app.addItem(NSMenuItem(title: "Quit TinyMac", action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q"))
+        app.addItem(NSMenuItem(title: "Quit \(appName)", action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q"))
         appItem.submenu = app
+        extendMainMenu(main)
         NSApp.mainMenu = main
     }
 }
