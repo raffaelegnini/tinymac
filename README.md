@@ -73,10 +73,13 @@ Both apps are universal (Apple silicon and Intel) and need macOS 13 or later.
 
 ```bash
 brew tap raffaelegnini/tinymac
+brew trust raffaelegnini/tinymac
 
 brew install --cask tinymac        # TinyMac: TinyTask 1:1
 brew install --cask tinymac-plus   # TinyMac Plus: TinyTask plus the extras
 ```
+
+`brew trust` is needed once: recent Homebrew versions only load casks from taps outside Homebrew after you trust them.
 
 Homebrew puts the app in `/Applications` and lets macOS open it without the Gatekeeper warning. Update with
 `brew upgrade --cask tinymac` (or `tinymac-plus`).
