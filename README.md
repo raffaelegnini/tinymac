@@ -67,20 +67,32 @@ small `<name>.rec.tinymac` file next to the recording, which TinyTask simply ign
 
 ## Install
 
-Download the latest release from the [Releases](../../releases/latest) page:
+Both apps are universal (Apple silicon and Intel) and need macOS 13 or later.
 
-- `TinyMac-<version>-macOS.zip` for TinyMac
-- `TinyMacPlus-<version>-macOS.zip` for TinyMac Plus
-
-Unzip it and move the app to `/Applications`. Both apps are universal (Apple silicon and Intel) and need macOS 13 or
-later.
-
-The apps are signed ad hoc, not notarised, so macOS blocks them the first time you open them. Open the app once, then
-go to **System Settings › Privacy & Security** and click **Open Anyway**. Or run:
+### With Homebrew (easiest)
 
 ```bash
-xattr -dr com.apple.quarantine /Applications/TinyMac.app
+brew tap raffaelegnini/tinymac
+
+brew install --cask tinymac        # TinyMac: TinyTask 1:1
+brew install --cask tinymac-plus   # TinyMac Plus: TinyTask plus the extras
 ```
+
+Homebrew puts the app in `/Applications` and lets macOS open it without the Gatekeeper warning. Update with
+`brew upgrade --cask tinymac` (or `tinymac-plus`).
+
+### Manual download
+
+1. Download the latest release from the [Releases](../../releases/latest) page:
+   - `TinyMac-<version>-macOS.zip` for TinyMac
+   - `TinyMacPlus-<version>-macOS.zip` for TinyMac Plus
+2. Unzip it and move the app to `/Applications`.
+3. The apps are signed ad hoc, not notarised, so macOS blocks them the first time you open them. Open the app once,
+   then go to **System Settings › Privacy & Security** and click **Open Anyway**. Or run:
+
+   ```bash
+   xattr -dr com.apple.quarantine /Applications/TinyMac.app       # or TinyMacPlus.app
+   ```
 
 ## Permissions
 
