@@ -14,6 +14,8 @@ same hotkeys, the same timings, the same `.rec` files.
 If you just want TinyTask on your Mac, this is it. If you like TinyTask but always wished it did a few more things,
 there is **TinyMac Plus**: the same engine, with the extras people have asked for for years.
 
+**[Install](#install)** · [Pick your version](#pick-your-version) · [Why 1:1](#why-11) · [TinyMac Plus](#tinymac-plus) · [Usage](#usage)
+
 ## Pick your version
 
 | | **TinyMac** | **TinyMac Plus** |
@@ -26,44 +28,6 @@ there is **TinyMac Plus**: the same engine, with the extras people have asked fo
 | Extras | None, on purpose | Editor, scroll wheel, custom hotkeys, panic stop, progress overlay, per-recording settings, screen scaling, menu bar icon, countdown |
 
 Both apps share one settings file, open the same recordings and can be installed side by side.
-
-## Why 1:1
-
-Most macro recorders for the Mac are *TinyTask-style*: they borrow the idea and then do things their own way, with a
-new file format, a library, a timeline, an onboarding flow. TinyMac does the opposite. It reproduces what TinyTask
-actually does, down to the details:
-
-- **Same files.** A `.rec` recorded on Windows plays on the Mac, and one recorded on the Mac plays in TinyTask.
-- **Same speeds.** ½x, 1x, 2x, 100x and a custom multiplier, with TinyTask's own rules (100x skips mouse moves the
-  way TinyTask does, a custom speed of 1 plays at ½x).
-- **Same recording.** TinyTask samples the keyboard and mouse every 10 ms; so does TinyMac. Recordings come out with
-  the same events and the same timing.
-- **Same hotkeys.** Ctrl+Shift+Alt+R / P, Print Screen, F8 or F12. Pause and Scroll Lock stop playback.
-- **Same settings.** The same keys, values and defaults as `tinytask.ini`.
-- **Same Compile.** Turn a recording into a standalone app that plays it and quits, like TinyTask's `.exe`.
-- **Same quirks.** Even the odd ones are kept, because muscle memory depends on them.
-  [`COMPATIBILITY.md`](COMPATIBILITY.md) lists them all.
-
-The only changes are the ones a Mac needs: Option instead of Alt, F13/F14/F15 for the keys Mac keyboards lack, `.app`
-instead of `.exe`, and a native toolbar.
-
-## TinyMac Plus
-
-Everything above, plus:
-
-- **Edit recordings.** Change delays and positions, delete events, insert waits, trim the start or the end, speed up
-  or slow down a part. No more re-recording a whole macro to fix one click.
-- **Scroll wheel.** TinyTask never recorded the wheel. Plus records and replays it, trackpad scrolling included.
-- **Custom hotkeys.** Any key combination for record and play, instead of the four fixed choices.
-- **Panic stop.** Press Esc, or move the mouse, to stop a playback.
-- **Progress overlay.** A small floating panel with the loop count, elapsed time and progress.
-- **Per-recording settings.** Speed and loops are saved next to each `.rec`, and the loop count survives a restart.
-- **Screen scaling.** Positions are scaled when you play a recording on a display of a different size.
-- **Menu bar icon.** Record, play and stop from the menu bar.
-- **Countdown.** An optional 3-second countdown before recording starts.
-
-Every extra can be switched off in **Prefs › Plus Options**. Files stay TinyTask files: the extra settings live in a
-small `<name>.rec.tinymac` file next to the recording, which TinyTask simply ignores.
 
 ## Install
 
@@ -106,6 +70,44 @@ On first launch, TinyMac needs two permissions in **System Settings › Privacy 
 
 Grant both, then quit the app (⌘Q) and open it again. TinyMac and TinyMac Plus are separate apps, so each one needs
 its own permissions.
+
+## Why 1:1
+
+Most macro recorders for the Mac are *TinyTask-style*: they borrow the idea and then do things their own way, with a
+new file format, a library, a timeline, an onboarding flow. TinyMac does the opposite. It reproduces what TinyTask
+actually does, down to the details:
+
+- **Same files.** A `.rec` recorded on Windows plays on the Mac, and one recorded on the Mac plays in TinyTask.
+- **Same speeds.** ½x, 1x, 2x, 100x and a custom multiplier, with TinyTask's own rules (100x skips mouse moves the
+  way TinyTask does, a custom speed of 1 plays at ½x).
+- **Same recording.** TinyTask samples the keyboard and mouse every 10 ms; so does TinyMac. Recordings come out with
+  the same events and the same timing.
+- **Same hotkeys.** Ctrl+Shift+Alt+R / P, Print Screen, F8 or F12. Pause and Scroll Lock stop playback.
+- **Same settings.** The same keys, values and defaults as `tinytask.ini`.
+- **Same Compile.** Turn a recording into a standalone app that plays it and quits, like TinyTask's `.exe`.
+- **Same quirks.** Even the odd ones are kept, because muscle memory depends on them.
+  [`COMPATIBILITY.md`](COMPATIBILITY.md) lists them all.
+
+The only changes are the ones a Mac needs: Option instead of Alt, F13/F14/F15 for the keys Mac keyboards lack, `.app`
+instead of `.exe`, and a native toolbar.
+
+## TinyMac Plus
+
+Everything above, plus:
+
+- **Edit recordings.** Change delays and positions, delete events, insert waits, trim the start or the end, speed up
+  or slow down a part. No more re-recording a whole macro to fix one click.
+- **Scroll wheel.** TinyTask never recorded the wheel. Plus records and replays it, trackpad scrolling included.
+- **Custom hotkeys.** Any key combination for record and play, instead of the four fixed choices.
+- **Panic stop.** Press Esc, or move the mouse, to stop a playback.
+- **Progress overlay.** A small floating panel with the loop count, elapsed time and progress.
+- **Per-recording settings.** Speed and loops are saved next to each `.rec`, and the loop count survives a restart.
+- **Screen scaling.** Positions are scaled when you play a recording on a display of a different size.
+- **Menu bar icon.** Record, play and stop from the menu bar.
+- **Countdown.** An optional 3-second countdown before recording starts.
+
+Every extra can be switched off in **Prefs › Plus Options**. Files stay TinyTask files: the extra settings live in a
+small `<name>.rec.tinymac` file next to the recording, which TinyTask simply ignores.
 
 ## Usage
 
