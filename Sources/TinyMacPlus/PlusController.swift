@@ -10,7 +10,7 @@ final class PlusController: TinyMacController, NSMenuDelegate {
     // Plus commands, next to TinyTask's 0x8000-0x801B
     static let cmdEdit = 0x9000, cmdScroll = 0x9001, cmdStopEsc = 0x9002, cmdStopMouse = 0x9003
     static let cmdHUD = 0x9004, cmdCountdown = 0x9005, cmdScale = 0x9006, cmdRemember = 0x9007
-    static let cmdMenuBar = 0x9008, cmdRecordHotkey = 0x9010, cmdPlayHotkey = 0x9011
+    static let cmdMenuBar = 0x9008, cmdScreenSize = 0x9009, cmdRecordHotkey = 0x9010, cmdPlayHotkey = 0x9011
     static let cmdDefaultHotkeys = 0x9012, cmdShowWindow = 0x9020
 
     override var appName: String { "TinyMac Plus" }
@@ -24,6 +24,7 @@ final class PlusController: TinyMacController, NSMenuDelegate {
     private var hudTimer: Timer?
 
     private var recordScreen: CGSize?   // main display size the current recording was made on
+    private var loadedPath: String?     // .rec the current recording was opened from or saved to
     private var userMoved = 0.0         // real mouse movement since playback started, in pixels
     private var escPressed = false
     private var playTotal = 0
@@ -99,6 +100,7 @@ final class PlusController: TinyMacController, NSMenuDelegate {
         case Self.cmdHUD: plus.showHUD.toggle(); refreshHUD()
         case Self.cmdCountdown: plus.countdown = plus.countdown > 0 ? 0 : 3
         case Self.cmdScale: plus.scaleToScreen.toggle()
+        case Self.cmdScreenSize: askScreenSize()
         case Self.cmdRemember: plus.rememberPerFile.toggle()
         case Self.cmdMenuBar: plus.menuBarIcon.toggle(); updateStatusItem()
         case Self.cmdRecordHotkey: askHotkey(forRecord: true)
@@ -119,6 +121,7 @@ final class PlusController: TinyMacController, NSMenuDelegate {
         guard state == 0 else { return }
         watcher.start()   // may only succeed once Input Monitoring has been granted
         recordScreen = Self.mainScreenSize
+        loadedPath = nil
         super.command(Self.cmdRecord, hi: hi)
     }
 
@@ -160,6 +163,9 @@ final class PlusController: TinyMacController, NSMenuDelegate {
     override func didLoad(path: String) {
         let side = Sidecar.load(for: path)
         recordScreen = side?.screenSize
+        loadedPath = path
+        // A .rec from TinyTask or TinyMac has no screen size: ask for it, once per file.
+        if recordScreen == nil && plus.scaleToScreen && !compiled { askScreenSize(imported: true) }
         guard !compiled, plus.rememberPerFile, let side else { return }
         if let s = side.speed { speed = s }
         if let l = side.loops { loops = max(1, l) }
@@ -167,6 +173,7 @@ final class PlusController: TinyMacController, NSMenuDelegate {
     }
 
     override func didSave(path: String) {
+        loadedPath = path
         guard plus.rememberPerFile || plus.scaleToScreen else { return }
         let screen = recordScreen ?? Self.mainScreenSize
         var side = Sidecar(screenWidth: Double(screen.width), screenHeight: Double(screen.height))
@@ -239,6 +246,10 @@ final class PlusController: TinyMacController, NSMenuDelegate {
         options.addItem(item("Show Progress Overlay", Self.cmdHUD, checked: plus.showHUD))
         options.addItem(item("Countdown Before Recording (3 s)", Self.cmdCountdown, checked: plus.countdown > 0))
         options.addItem(item("Scale Positions to the Current Screen", Self.cmdScale, checked: plus.scaleToScreen))
+        let size = recordScreen.map { "  (\(Int($0.width)) × \(Int($0.height)))" } ?? ""
+        let sizeItem = item("Recorded Screen Size...\(size)", Self.cmdScreenSize)
+        sizeItem.isEnabled = !records.isEmpty
+        options.addItem(sizeItem)
         options.addItem(item("Remember Speed and Loops per Recording", Self.cmdRemember, checked: plus.rememberPerFile))
         options.addItem(item("Menu Bar Icon", Self.cmdMenuBar, checked: plus.menuBarIcon))
         options.addItem(.separator())
@@ -361,5 +372,53 @@ final class PlusController: TinyMacController, NSMenuDelegate {
             return
         }
         if forRecord { plus.recordHotkey = hk } else { plus.playHotkey = hk }
+    }
+    /// Asks for the size of the screen the current recording was made on, so that
+    /// "Scale Positions to the Current Screen" can map its positions onto this one.
+    /// TinyTask stores absolute positions and no screen size, so imported files need this.
+    private func askScreenSize(imported: Bool = false) {
+        let alert = NSAlert()
+        alert.messageText = "Recorded Screen Size"
+        alert.informativeText = (imported
+            ? "This recording does not say which screen it was made on. TinyTask stores absolute positions, so a "
+              + "recording made on a screen of a different size clicks in the wrong places.\n\n"
+            : "")
+            + "Enter the screen resolution the recording was made on (on Windows: Settings › Display). "
+            + "This Mac's screen is \(Int(Self.mainScreenSize.width)) × \(Int(Self.mainScreenSize.height))."
+        alert.addButton(withTitle: "Scale")
+        alert.addButton(withTitle: imported ? "Don't Scale" : "Cancel")
+        let current = recordScreen ?? CGSize(width: 1920, height: 1080)
+        let width = NSTextField(string: String(Int(current.width)))
+        let height = NSTextField(string: String(Int(current.height)))
+        for field in [width, height] {
+            field.alignment = .center
+            field.widthAnchor.constraint(equalToConstant: 80).isActive = true
+        }
+        let row = NSStackView(views: [width, NSTextField(labelWithString: "×"), height])
+        row.frame = NSRect(x: 0, y: 0, width: 260, height: 24)
+        alert.accessoryView = row
+        alert.window.initialFirstResponder = width
+        alert.window.level = topmost ? .floating : .modalPanel
+        NSApp.activate(ignoringOtherApps: true)
+        let response = alert.runModal()
+
+        if response == .alertFirstButtonReturn {
+            guard let w = Int(width.stringValue.trimmingCharacters(in: .whitespaces)),
+                  let h = Int(height.stringValue.trimmingCharacters(in: .whitespaces)),
+                  (100...20000).contains(w), (100...20000).contains(h) else {
+                messageBox("Invalid screen size", title: appName, style: .warning)
+                return
+            }
+            recordScreen = CGSize(width: w, height: h)
+        } else if imported {
+            recordScreen = Self.mainScreenSize   // made on this screen: nothing to scale, and don't ask again
+        } else {
+            return
+        }
+        guard let path = loadedPath, let screen = recordScreen else { return }
+        var side = Sidecar.load(for: path) ?? Sidecar()
+        side.screenWidth = Double(screen.width)
+        side.screenHeight = Double(screen.height)
+        side.save(for: path)
     }
 }

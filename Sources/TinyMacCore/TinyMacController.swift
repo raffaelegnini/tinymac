@@ -35,7 +35,7 @@ open class TinyMacController: NSObject, NSApplicationDelegate, NSWindowDelegate 
 
     public static let section = "TinyTask"  // ini section kept as in the original
     public static let version = "1.77"      // TinyTask release this port reproduces
-    public static let appVersion = "1.1"
+    public static let appVersion = "1.1.1"
 
     /// Name shown in titles and dialogs; TinyMac Plus overrides it.
     open var appName: String { "TinyMac" }

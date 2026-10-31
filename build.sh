@@ -4,8 +4,8 @@
 set -euo pipefail
 cd "$(dirname "$0")"
 
-VERSION=1.1.0
-SHORT=1.1
+VERSION=1.1.1
+SHORT=1.1.1
 
 swift build -c release --arch arm64 --arch x86_64 2>/dev/null || swift build -c release
 BIN_DIR="$(swift build -c release --arch arm64 --arch x86_64 --show-bin-path 2>/dev/null || swift build -c release --show-bin-path)"

@@ -71,6 +71,21 @@ On first launch, TinyMac needs two permissions in **System Settings › Privacy 
 Grant both, then quit the app (⌘Q) and open it again. TinyMac and TinyMac Plus are separate apps, so each one needs
 its own permissions.
 
+## Privacy
+
+TinyMac asks for powerful permissions, so here is exactly what it does with them:
+
+- **What it records:** key presses, mouse buttons and the cursor position (plus the scroll wheel in TinyMac Plus),
+  and only while a recording is running. It does not record the screen, window contents or anything you type while
+  it is not recording.
+- **Where it goes:** the recording stays in memory until you save it as a `.rec` file wherever you choose. Settings
+  live in `~/Library/Application Support/TinyMac/TinyMac.ini`. TinyMac Plus also writes a small `<name>.rec.tinymac`
+  file next to a saved recording, with its speed, loops and screen size.
+- **Network:** none. TinyMac never connects to the internet; the only link it opens is the TinyTask website, in your
+  browser, when you choose it from the menu.
+
+The source is all in this repository, and you can build the apps yourself (see [Build](#build)).
+
 ## Why 1:1
 
 Most macro recorders for the Mac are *TinyTask-style*: they borrow the idea and then do things their own way, with a
@@ -78,6 +93,8 @@ new file format, a library, a timeline, an onboarding flow. TinyMac does the opp
 actually does, down to the details:
 
 - **Same files.** A `.rec` recorded on Windows plays on the Mac, and one recorded on the Mac plays in TinyTask.
+  Positions are absolute, as in TinyTask, so clicks land in the same places only when both screens have the same
+  size. TinyMac Plus can scale them (see below).
 - **Same speeds.** ½x, 1x, 2x, 100x and a custom multiplier, with TinyTask's own rules (100x skips mouse moves the
   way TinyTask does, a custom speed of 1 plays at ½x).
 - **Same recording.** TinyTask samples the keyboard and mouse every 10 ms; so does TinyMac. Recordings come out with
@@ -102,7 +119,8 @@ Everything above, plus:
 - **Panic stop.** Press Esc, or move the mouse, to stop a playback.
 - **Progress overlay.** A small floating panel with the loop count, elapsed time and progress.
 - **Per-recording settings.** Speed and loops are saved next to each `.rec`, and the loop count survives a restart.
-- **Screen scaling.** Positions are scaled when you play a recording on a display of a different size.
+- **Screen scaling.** Positions are scaled when you play a recording on a display of a different size. For a `.rec`
+  made in TinyTask on Windows, Plus asks once for the resolution it was recorded on.
 - **Menu bar icon.** Record, play and stop from the menu bar.
 - **Countdown.** An optional 3-second countdown before recording starts.
 

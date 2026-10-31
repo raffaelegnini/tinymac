@@ -114,6 +114,11 @@ deleted events disappear, and the result saves as a normal `.rec`.
 When a `.tinymac` file stores the display size and the current main display has a different size, Plus scales every
 replayed mouse position by the ratio of the two sizes.
 
+A `.rec` from TinyTask, or from TinyMac, stores no display size. When Plus opens one with scaling on, it asks for the
+resolution the recording was made on and writes the answer to the `.tinymac` file, so it asks once per file. **Don't
+Scale** records the current display size, which turns scaling off for that file. **Plus Options › Recorded Screen
+Size** changes the value later.
+
 ## Website link
 
 TinyTask's author ended the project in 2020, and the tinytask.net domain has since passed to a third party. The
